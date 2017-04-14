@@ -1,6 +1,6 @@
 package cscie56.ps5
 
-class Comment {
+class Reply {
 
     String text
     Date dateCreated
@@ -10,9 +10,7 @@ class Comment {
 
     User user
 
-    static belongsTo = [blogEntry:BlogEntry]
-    static hasMany = [replies:Reply]
-
+    static belongsTo = [comment:Comment]
     static constraints = {
         text blank: false
     }

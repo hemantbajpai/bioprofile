@@ -49,14 +49,32 @@ class BlogEntryController {
     def publishEntry() {
 
         def blogEntry = BlogEntry.get(params.blogId)
-
+        blogEntry.datePublished = new Date()
         blogEntry.published = true
         blogEntry.save(flush:true, failOnError:true)
         redirect(uri: request.getHeader('referer') )
     }
 
     @Secured(Role.ROLE_USER)
-    def reject (Comment comment) {
+    def rejectReply (Reply reply) {
+
+        reply.approved = false;
+        reply.pending = false;
+        reply.save(flush:true, failOnError:true)
+        render reply as JSON
+    }
+
+    @Secured(Role.ROLE_USER)
+    def approveReply (Reply reply) {
+
+        reply.approved = true;
+        reply.pending = false;
+        reply.save(flush:true, failOnError:true)
+        render reply as JSON
+    }
+
+    @Secured(Role.ROLE_USER)
+    def rejectComment (Comment comment) {
 
         comment.approved = false;
         comment.pending = false;
@@ -65,7 +83,7 @@ class BlogEntryController {
     }
 
     @Secured(Role.ROLE_USER)
-    def approved (Comment comment) {
+    def approveComment (Comment comment) {
 
         comment.approved = true;
         comment.pending = false;
@@ -75,18 +93,40 @@ class BlogEntryController {
 
     @Secured(Role.ROLE_USER)
     def addComment() {
-
+        def commentToAdd
         def blogEntry = BlogEntry.get(params.blogId)
 
         def user = User.get(springSecurityService.principal.id)
-        def commentToAdd = new Comment(text:params.text, dateCreated:new Date(), blogEntry:blogEntry, user: user, approved:false, pending:true)
-        commentToAdd.save(flush:true, failOnError:true)
+        if (user.username == blogEntry.user.username) {
+            commentToAdd = new Comment(text: params.text, dateCreated: new Date(), blogEntry: blogEntry, user: user, approved: true, pending: false)
+        }
+        else {
+            commentToAdd = new Comment(text: params.text, dateCreated: new Date(), blogEntry: blogEntry, user: user, approved: false, pending: true)
+        }
+        commentToAdd.save(flush: true, failOnError: true)
 
         blogEntry.comments.add(commentToAdd)
         blogEntry.save(flush:true, failOnError:true)
         redirect(uri: request.getHeader('referer') )
     }
 
+    @Secured(Role.ROLE_USER)
+    def addReply() {
+        def replyToAdd
+        def comment = Comment.get(params.commentId)
+
+        def user = User.get(springSecurityService.principal.id)
+        if (user.username == comment.blogEntry.user.username) {
+            replyToAdd = new Reply(text: params.text, dateCreated: new Date(), comment: comment, user: user, approved: true, pending: false)
+        } else {
+            replyToAdd = new Reply(text: params.text, dateCreated: new Date(), comment: comment, user: user, approved: false, pending: true)
+        }
+        replyToAdd.save(flush: true, failOnError: true)
+
+        comment.replies.add(replyToAdd)
+        comment.save(flush:true, failOnError:true)
+        redirect(uri: request.getHeader('referer') )
+    }
 
     def show(BlogEntry blogEntry) {
         respond blogEntry
