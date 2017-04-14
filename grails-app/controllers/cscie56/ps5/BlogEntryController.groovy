@@ -7,19 +7,20 @@ import static org.springframework.http.HttpStatus.*
 import grails.transaction.Transactional
 
 @Transactional(readOnly = true)
-@Secured([Role.ROLE_ANONYMOUS, Role.ROLE_USER, Role.ROLE_ADMIN])
+@Secured([Role.ROLE_ADMIN])
 class BlogEntryController {
 
     static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
 
     def springSecurityService
 
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN,Role.ROLE_ANONYMOUS])
     def index(Integer max) {
         params.max = Math.min(max ?: 10, 100)
         respond BlogEntry.list(params), model:[blogEntryCount: BlogEntry.count()]
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def publishBlog() {
 
         def user = User.get(springSecurityService.principal.id)
@@ -32,7 +33,7 @@ class BlogEntryController {
         redirect(uri: request.getHeader('referer') )
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def saveBlog() {
 
         def user = User.get(springSecurityService.principal.id)
@@ -45,7 +46,7 @@ class BlogEntryController {
         redirect(uri: request.getHeader('referer') )
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def publishEntry() {
 
         def blogEntry = BlogEntry.get(params.blogId)
@@ -55,7 +56,7 @@ class BlogEntryController {
         redirect(uri: request.getHeader('referer') )
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def rejectReply (Reply reply) {
 
         reply.approved = false;
@@ -64,7 +65,7 @@ class BlogEntryController {
         render reply as JSON
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def approveReply (Reply reply) {
 
         reply.approved = true;
@@ -73,7 +74,7 @@ class BlogEntryController {
         render reply as JSON
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def rejectComment (Comment comment) {
 
         comment.approved = false;
@@ -82,7 +83,7 @@ class BlogEntryController {
         render comment as JSON
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def approveComment (Comment comment) {
 
         comment.approved = true;
@@ -91,7 +92,7 @@ class BlogEntryController {
         render comment as JSON
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def addComment() {
         def commentToAdd
         def blogEntry = BlogEntry.get(params.blogId)
@@ -110,7 +111,7 @@ class BlogEntryController {
         redirect(uri: request.getHeader('referer') )
     }
 
-    @Secured(Role.ROLE_USER)
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN])
     def addReply() {
         def replyToAdd
         def comment = Comment.get(params.commentId)
@@ -128,9 +129,11 @@ class BlogEntryController {
         redirect(uri: request.getHeader('referer') )
     }
 
+    @Secured([Role.ROLE_USER,Role.ROLE_ADMIN,Role.ROLE_ANONYMOUS])
     def show(BlogEntry blogEntry) {
         respond blogEntry
     }
+
 
     def create() {
         respond new BlogEntry(params)
